@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from app.middleware.tenant_auth import get_tenant_context
+from app.api.dependencies import authenticated_tenant, get_query_use_case
+from app.application.use_cases import QueryRAG
 from app.schemas.common import QueryRequest, QueryResponse
-from app.services.rag_engine import rag_engine
 
 router = APIRouter(prefix="/rag", tags=["rag"])
 
@@ -12,17 +12,13 @@ router = APIRouter(prefix="/rag", tags=["rag"])
 @router.post("/query", response_model=QueryResponse)
 async def query(
     request: QueryRequest,
+    tenant=Depends(authenticated_tenant),
+    use_case: QueryRAG = Depends(get_query_use_case),
 ) -> QueryResponse:
-    context = get_tenant_context()
-
-    result = await rag_engine.query(
-        tenant_id=context.tenant_id,
-        question=request.question,
-        n_results=request.n_results,
-    )
+    result = await use_case.execute(tenant.id, request.question, request.n_results)
 
     return QueryResponse(
-        answer=result["answer"],
-        sources=result["sources"],
-        context_chunks=result["context_chunks"],
+        answer=result.answer,
+        sources=result.sources,
+        context_chunks=result.context_chunks,
     )

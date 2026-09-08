@@ -164,12 +164,27 @@ ruff check --fix app/
 ruff format app/
 ```
 
+## Architecture
+
+The application follows a hexagonal architecture (ports and adapters):
+
+- `app/domain/`: business concepts with no framework dependency.
+- `app/application/`: use cases and protocols (ports). This is the stable business boundary.
+- `app/adapters/`: implementations for SQLAlchemy, ChromaDB, Ollama, and file processing.
+- `app/api/`: FastAPI delivery adapter and dependency composition root.
+- `app/core/`, `app/models/`: framework configuration and persistence mappings.
+
+Use cases receive protocols through their constructors, which keeps business rules testable with in-memory fakes and applies dependency inversion, single responsibility, and interface segregation.
+
 ## Project Structure
 
 ```
 rag-offline/
 ├── app/
-│   ├── api/           # API routes
+│   ├── api/           # HTTP adapter and composition root
+│   ├── application/   # Use cases and ports
+│   ├── domain/        # Framework-independent business concepts
+│   ├── adapters/      # SQLAlchemy, ChromaDB, Ollama adapters
 │   ├── core/          # Configuration, exceptions, logging, database
 │   ├── middleware/    # Auth middleware
 │   ├── models/        # SQLAlchemy models

@@ -2,17 +2,18 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.api.dependencies import get_ollama_provider
+from app.application.ports import EmbeddingProvider
 from app.schemas.common import HealthResponse
-from app.services.ollama_service import ollama_service
 
 router = APIRouter(tags=["health"])
 
 
 @router.get("/health", response_model=HealthResponse)
-async def health() -> HealthResponse:
-    ollama_connected = await ollama_service.check_connection()
+async def health(provider: EmbeddingProvider = Depends(get_ollama_provider)) -> HealthResponse:
+    ollama_connected = await provider.is_available()
 
     return HealthResponse(
         status="healthy" if ollama_connected else "degraded",

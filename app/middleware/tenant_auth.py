@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextvars import ContextVar
 from typing import Optional
 
 from fastapi import HTTPException, Request, status
@@ -19,26 +20,25 @@ class TenantContext:
         self.api_key = api_key
 
 
-_tenant_context: Optional[TenantContext] = None
+_tenant_context: ContextVar[Optional[TenantContext]] = ContextVar("tenant_context", default=None)
 
 
 def get_tenant_context() -> TenantContext:
-    if _tenant_context is None:
+    context = _tenant_context.get()
+    if context is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="No tenant context found",
         )
-    return _tenant_context
+    return context
 
 
 def set_tenant_context(tenant_id: str, api_key: str) -> None:
-    global _tenant_context
-    _tenant_context = TenantContext(tenant_id, api_key)
+    _tenant_context.set(TenantContext(tenant_id, api_key))
 
 
 def clear_tenant_context() -> None:
-    global _tenant_context
-    _tenant_context = None
+    _tenant_context.set(None)
 
 
 class TenantAuthMiddleware(BaseHTTPMiddleware):
@@ -51,7 +51,7 @@ class TenantAuthMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         method = request.method
 
-        if path in ["/health", "/docs", "/openapi.json", "/redoc"]:
+        if path in ["/", "/health", "/docs", "/openapi.json", "/redoc"]:
             return await call_next(request)
 
         if path == "/tenants" and method == "POST":
