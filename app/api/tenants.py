@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.dependencies import authenticated_tenant, get_tenant_use_cases
+from app.application.ports import TenantRecord
 from app.application.use_cases import TenantUseCases
 from app.schemas.common import TenantCreate, TenantResponse
 
@@ -20,12 +19,12 @@ async def create_tenant(
     return TenantResponse.model_validate(tenant)
 
 
-@router.get("", response_model=List[TenantResponse])
+@router.get("", response_model=list[TenantResponse])
 async def list_tenants(
     skip: int = 0,
     limit: int = 100,
-    authenticated=Depends(authenticated_tenant),
-) -> List[TenantResponse]:
+    authenticated: TenantRecord = Depends(authenticated_tenant),
+) -> list[TenantResponse]:
     tenants = [authenticated]
     return [TenantResponse.model_validate(tenant) for tenant in tenants]
 
@@ -33,7 +32,7 @@ async def list_tenants(
 @router.get("/{tenant_id}", response_model=TenantResponse)
 async def get_tenant(
     tenant_id: str,
-    authenticated=Depends(authenticated_tenant),
+    authenticated: TenantRecord = Depends(authenticated_tenant),
 ) -> TenantResponse:
     if authenticated.id != tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
@@ -44,7 +43,7 @@ async def get_tenant(
 @router.delete("/{tenant_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_tenant(
     tenant_id: str,
-    authenticated=Depends(authenticated_tenant),
+    authenticated: TenantRecord = Depends(authenticated_tenant),
     service: TenantUseCases = Depends(get_tenant_use_cases),
 ):
     if authenticated.id != tenant_id:

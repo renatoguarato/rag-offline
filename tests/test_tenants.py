@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import pytest
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_create_tenant(client):
+async def test_create_tenant(client: AsyncClient) -> None:
     response = await client.post("/tenants", json={"name": "Test Tenant"})
 
     assert response.status_code == 201
@@ -16,7 +17,7 @@ async def test_create_tenant(client):
 
 
 @pytest.mark.asyncio
-async def test_list_tenants(client):
+async def test_list_tenants(client: AsyncClient) -> None:
     await client.post("/tenants", json={"name": "Tenant 1"})
     await client.post("/tenants", json={"name": "Tenant 2"})
 
@@ -28,7 +29,7 @@ async def test_list_tenants(client):
 
 
 @pytest.mark.asyncio
-async def test_get_tenant(client):
+async def test_get_tenant(client: AsyncClient) -> None:
     create_response = await client.post("/tenants", json={"name": "Test Tenant"})
     tenant_id = create_response.json()["id"]
 
@@ -40,7 +41,7 @@ async def test_get_tenant(client):
 
 
 @pytest.mark.asyncio
-async def test_delete_tenant(client):
+async def test_delete_tenant(client: AsyncClient) -> None:
     create_response = await client.post("/tenants", json={"name": "Test Tenant"})
     tenant_id = create_response.json()["id"]
 

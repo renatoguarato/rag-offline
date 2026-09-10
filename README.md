@@ -154,14 +154,13 @@ pytest tests/test_tenants.py::test_create_tenant
 
 ```bash
 # Type checking
-mypy app/
+pyright
 
 # Linting
-ruff check app/
-ruff check --fix app/
+ruff check .
 
 # Formatting
-ruff format app/
+ruff format .
 ```
 
 ## Architecture

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-from typing import List, Optional
 
 import chromadb
 from chromadb.config import Settings as ChromaSettings
@@ -41,8 +40,8 @@ class ChromaService:
         self,
         tenant_id: str,
         document_id: str,
-        chunks: List[str],
-        embeddings: List[List[float]],
+        chunks: list[str],
+        embeddings: list[list[float]],
     ) -> int:
         collection = self.get_collection(tenant_id)
 
@@ -97,9 +96,9 @@ class ChromaService:
     def query(
         self,
         tenant_id: str,
-        query_embedding: List[float],
+        query_embedding: list[float],
         n_results: int = 5,
-    ) -> List[dict]:
+    ) -> list[dict]:
         collection = self.get_collection(tenant_id)
 
         try:
@@ -109,13 +108,15 @@ class ChromaService:
             )
 
             formatted_results = []
-            for i, doc_id in enumerate(results["ids"][0]):
-                formatted_results.append({
-                    "document_id": results["metadatas"][0][i]["document_id"],
-                    "chunk_index": results["metadatas"][0][i]["chunk_index"],
-                    "content": results["documents"][0][i],
-                    "distance": results["distances"][0][i],
-                })
+            for i, _doc_id in enumerate(results["ids"][0]):
+                formatted_results.append(
+                    {
+                        "document_id": results["metadatas"][0][i]["document_id"],
+                        "chunk_index": results["metadatas"][0][i]["chunk_index"],
+                        "content": results["documents"][0][i],
+                        "distance": results["distances"][0][i],
+                    }
+                )
 
             logger.info(f"Retrieved {len(formatted_results)} chunks for tenant {tenant_id}")
             return formatted_results
@@ -123,7 +124,7 @@ class ChromaService:
             logger.error(f"Failed to query ChromaDB for tenant {tenant_id}: {e}")
             raise ChromaException(f"Failed to query: {e}")
 
-    def count_chunks(self, tenant_id: str, document_id: Optional[str] = None) -> int:
+    def count_chunks(self, tenant_id: str, document_id: str | None = None) -> int:
         collection = self.get_collection(tenant_id)
 
         try:

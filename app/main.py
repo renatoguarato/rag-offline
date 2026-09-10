@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,7 +10,6 @@ from app.api.documents import router as documents_router
 from app.api.health import router as health_router
 from app.api.rag import router as rag_router
 from app.api.tenants import router as tenants_router
-from app.core.config import settings
 from app.core.database import init_db
 from app.core.logging import setup_logging
 from app.middleware.tenant_auth import TenantAuthMiddleware
@@ -49,7 +48,7 @@ app.include_router(rag_router)
 
 
 @app.get("/")
-async def root() -> dict:
+async def root() -> dict[str, str]:
     return {
         "name": "RAG Offline Multi-Tenant API",
         "version": "1.0.0",

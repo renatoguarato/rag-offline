@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
+
 import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.database import Base, get_db
 from app.main import app
-
 
 DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
@@ -25,13 +26,13 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 
-async def override_get_db() -> AsyncSession:
+async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         yield session
 
 
 @pytest.fixture
-async def db_session():
+async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -43,7 +44,7 @@ async def db_session():
 
 
 @pytest.fixture
-async def client(db_session: AsyncSession):
+async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides[get_db] = override_get_db
 
     async with AsyncClient(app=app, base_url="http://test") as ac:
@@ -53,13 +54,15 @@ async def client(db_session: AsyncSession):
 
 
 @pytest.fixture
-async def tenant_client(client: AsyncClient):
+async def tenant_client(client: AsyncClient) -> AsyncClient:
     response = await client.post("/tenants", json={"name": "Test Tenant"})
     tenant_data = response.json()
 
-    client.headers.update({
-        "X-Tenant-ID": tenant_data["id"],
-        "X-API-KEY": tenant_data["api_key"],
-    })
+    client.headers.update(
+        {
+            "X-Tenant-ID": tenant_data["id"],
+            "X-API-KEY": tenant_data["api_key"],
+        }
+    )
 
     return client

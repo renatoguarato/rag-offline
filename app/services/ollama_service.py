@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import List, Optional
-
 import httpx
 from ollama import AsyncClient
 
@@ -18,7 +16,7 @@ class OllamaService:
         self.model = settings.OLLAMA_MODEL
         logger.info(f"Ollama client initialized with model: {self.model}")
 
-    async def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
+    async def generate_embeddings(self, texts: list[str]) -> list[list[float]]:
         embeddings = []
 
         for text in texts:
@@ -32,7 +30,7 @@ class OllamaService:
         logger.info(f"Generated {len(embeddings)} embeddings")
         return embeddings
 
-    async def generate_response(self, prompt: str, context: Optional[str] = None) -> str:
+    async def generate_response(self, prompt: str, context: str | None = None) -> str:
         system_prompt = (
             "You are a helpful assistant that answers questions based on the "
             "provided context. If the answer cannot be found in the context, "

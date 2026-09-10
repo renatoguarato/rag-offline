@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from typing import List
-
+from app.core.exceptions import RAGException
+from app.core.logging import get_logger
 from app.services.chroma_service import chroma_service
 from app.services.document_processor import document_processor
 from app.services.ollama_service import ollama_service
-from app.core.exceptions import RAGException
-from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -79,7 +77,9 @@ class RAGEngine:
     def delete_tenant_data(self, tenant_id: str) -> int:
         try:
             deleted_count = chroma_service.delete_tenant_data(tenant_id)
-            logger.info(f"Deleted tenant {tenant_id} data from vector store: {deleted_count} chunks")
+            logger.info(
+                f"Deleted tenant {tenant_id} data from vector store: {deleted_count} chunks"
+            )
             return deleted_count
         except Exception as e:
             logger.error(f"Failed to delete tenant {tenant_id} data: {e}")

@@ -3,10 +3,11 @@ from __future__ import annotations
 import io
 
 import pytest
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_upload_document(tenant_client):
+async def test_upload_document(tenant_client: AsyncClient) -> None:
     file_content = b"Test document content for testing purposes."
 
     files = {
@@ -24,7 +25,7 @@ async def test_upload_document(tenant_client):
 
 
 @pytest.mark.asyncio
-async def test_list_documents(tenant_client):
+async def test_list_documents(tenant_client: AsyncClient) -> None:
     file_content = b"Test document content."
 
     files = {
@@ -41,7 +42,7 @@ async def test_list_documents(tenant_client):
 
 
 @pytest.mark.asyncio
-async def test_get_document(tenant_client):
+async def test_get_document(tenant_client: AsyncClient) -> None:
     file_content = b"Test document content."
 
     files = {
@@ -59,7 +60,7 @@ async def test_get_document(tenant_client):
 
 
 @pytest.mark.asyncio
-async def test_delete_document(tenant_client):
+async def test_delete_document(tenant_client: AsyncClient) -> None:
     file_content = b"Test document content."
 
     files = {

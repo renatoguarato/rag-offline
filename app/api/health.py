@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends
 
@@ -18,5 +18,5 @@ async def health(provider: EmbeddingProvider = Depends(get_ollama_provider)) -> 
     return HealthResponse(
         status="healthy" if ollama_connected else "degraded",
         ollama_connected=ollama_connected,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
     )

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
-from typing import List, Optional
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -63,7 +62,7 @@ class DocumentService:
         tenant_id: str,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[Document]:
+    ) -> list[Document]:
         result = await self.db.execute(
             select(Document)
             .where(
@@ -77,7 +76,7 @@ class DocumentService:
 
     async def delete_document(self, document_id: str, tenant_id: str) -> None:
         document = await self.get_document(document_id, tenant_id)
-        document.deleted_at = datetime.utcnow()
+        document.deleted_at = datetime.now(UTC)
         await self.db.commit()
 
         logger.info(f"Soft deleted document {document_id} for tenant {tenant_id}")

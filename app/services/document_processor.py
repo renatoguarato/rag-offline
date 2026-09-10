@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import hashlib
 from io import BytesIO
-from typing import List, Tuple
 
-import numpy as np
 from docx import Document as DocxDocument
 from pypdf import PdfReader
 
@@ -58,7 +55,7 @@ class DocumentProcessor:
                 raise DocumentProcessingException(f"Failed to extract text from TXT: {e}")
 
     @staticmethod
-    def chunk_text(text: str) -> List[str]:
+    def chunk_text(text: str) -> list[str]:
         chunks = []
         start = 0
         text_length = len(text)
@@ -86,7 +83,7 @@ class DocumentProcessor:
         return chunks
 
     @staticmethod
-    def process_document(content_type: str, file_content: bytes) -> Tuple[str, List[str]]:
+    def process_document(content_type: str, file_content: bytes) -> tuple[str, list[str]]:
         content_type_lower = content_type.lower()
 
         if "pdf" in content_type_lower:

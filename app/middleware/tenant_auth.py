@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from contextvars import ContextVar
-from typing import Optional
 
 from fastapi import HTTPException, Request, status
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.responses import Response
 from starlette.types import ASGIApp
 
 from app.core.config import settings
-from app.core.exceptions import AuthenticationException
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -20,7 +19,7 @@ class TenantContext:
         self.api_key = api_key
 
 
-_tenant_context: ContextVar[Optional[TenantContext]] = ContextVar("tenant_context", default=None)
+_tenant_context: ContextVar[TenantContext | None] = ContextVar("tenant_context", default=None)
 
 
 def get_tenant_context() -> TenantContext:
@@ -47,7 +46,7 @@ class TenantAuthMiddleware(BaseHTTPMiddleware):
         self.tenant_id_header = settings.TENANT_ID_HEADER
         self.api_key_header = settings.API_KEY_HEADER
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         path = request.url.path
         method = request.method
 

@@ -20,14 +20,13 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ### Linting & Formatting
 ```bash
 # Type checking
-mypy app/
+pyright
 
 # Linting
-ruff check app/
-ruff check --fix app/
+ruff check .
 
 # Formatting
-ruff format app/
+ruff format .
 ```
 
 ### Testing

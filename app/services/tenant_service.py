@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import hashlib
 import secrets
 import uuid
-from typing import List, Optional
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -78,20 +77,15 @@ class TenantService:
 
         return tenant
 
-    async def list_tenants(self, skip: int = 0, limit: int = 100) -> List[Tenant]:
+    async def list_tenants(self, skip: int = 0, limit: int = 100) -> list[Tenant]:
         result = await self.db.execute(
-            select(Tenant)
-            .where(Tenant.deleted_at.is_(None))
-            .offset(skip)
-            .limit(limit)
+            select(Tenant).where(Tenant.deleted_at.is_(None)).offset(skip).limit(limit)
         )
         return list(result.scalars().all())
 
     async def delete_tenant(self, tenant_id: str) -> None:
-        from datetime import datetime
-
         tenant = await self.get_tenant(tenant_id)
-        tenant.deleted_at = datetime.utcnow()
+        tenant.deleted_at = datetime.now(UTC)
         await self.db.commit()
 
         logger.info(f"Soft deleted tenant {tenant_id}")
