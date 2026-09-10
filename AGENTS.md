@@ -7,41 +7,39 @@ Production-ready offline RAG application using Python 3.11, FastAPI, Ollama (lla
 
 ### Setup
 ```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
+uv sync
 ```
 
 ### Development
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### Linting & Formatting
 ```bash
 # Type checking
-pyright
+uv run pyright
 
 # Linting
-ruff check .
+uv run ruff check .
 
 # Formatting
-ruff format .
+uv run ruff format .
 ```
 
 ### Testing
 ```bash
 # Run all tests
-pytest
+uv run pytest
 
 # Run single test file
-pytest tests/test_module.py
+uv run pytest tests/test_module.py
 
 # Run single test
-pytest tests/test_module.py::test_function
+uv run pytest tests/test_module.py::test_function
 
 # Run with coverage
-pytest --cov=app --cov-report=html
+uv run pytest --cov=app --cov-report=html
 ```
 
 ## Code Style Guidelines

@@ -38,13 +38,11 @@ Production-ready offline RAG (Retrieval-Augmented Generation) application with s
 git clone <repository-url>
 cd rag-offline
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
+# Install Python 3.11 and project dependencies
+uv sync
 ```
+
+For a reproducible installation using the committed lockfile, run `uv sync --locked`.
 
 ## Configuration
 
@@ -65,7 +63,7 @@ Available configuration options:
 
 ```bash
 # Development server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 The API will be available at `http://localhost:8000`
@@ -138,29 +136,29 @@ Multi-tenant isolation ensures:
 
 ```bash
 # Run all tests
-pytest
+uv run pytest
 
 # Run with coverage
-pytest --cov=app --cov-report=html
+uv run pytest --cov=app --cov-report=html
 
 # Run single test file
-pytest tests/test_tenants.py
+uv run pytest tests/test_tenants.py
 
 # Run single test
-pytest tests/test_tenants.py::test_create_tenant
+uv run pytest tests/test_tenants.py::test_create_tenant
 ```
 
 ## Code Quality
 
 ```bash
 # Type checking
-pyright
+uv run pyright
 
 # Linting
-ruff check .
+uv run ruff check .
 
 # Formatting
-ruff format .
+uv run ruff format .
 ```
 
 ## Architecture

@@ -1,3 +1,36 @@
+[project]
+name = "rag-offline"
+version = "1.0.0"
+description = "Production-ready offline RAG application with multi-tenant isolation"
+requires-python = ">=3.11"
+dependencies = [
+    "aiosqlite==0.20.0",
+    "alembic==1.14.0",
+    "chromadb==0.6.3",
+    "fastapi==0.115.0",
+    "httpx==0.27.0",
+    "numpy==1.26.4",
+    "ollama==0.4.1",
+    "onnxruntime==1.23.2",
+    "pydantic==2.10.0",
+    "pydantic-settings==2.6.0",
+    "pypdf==5.1.0",
+    "python-docx==1.1.2",
+    "python-dotenv==1.0.1",
+    "python-multipart==0.0.12",
+    "sqlalchemy[asyncio]==2.0.35",
+    "uvicorn[standard]==0.32.0",
+]
+
+[dependency-groups]
+dev = [
+    "pyright==1.1.390",
+    "pytest==8.3.4",
+    "pytest-asyncio==0.24.0",
+    "pytest-cov==6.0.0",
+    "ruff==0.8.4",
+]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
