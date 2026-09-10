@@ -22,6 +22,7 @@ async def test_upload_document(tenant_client: AsyncClient) -> None:
     assert data["filename"] == "test.txt"
     assert data["content_type"] == "text/plain"
     assert data["file_size"] == len(file_content)
+    assert data["index_status"] == "indexed"
 
 
 @pytest.mark.asyncio

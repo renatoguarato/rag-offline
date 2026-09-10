@@ -67,6 +67,7 @@ class SqlAlchemyDocumentRepository:
             content_type=content_type,
             file_size=file_size,
             chunk_count=0,
+            index_status="pending",
         )
         self.session.add(document)
         await self.session.commit()
@@ -98,6 +99,13 @@ class SqlAlchemyDocumentRepository:
     async def update_chunk_count(self, tenant_id: str, document_id: str, count: int) -> Document:
         document = await self.get(document_id, tenant_id)
         document.chunk_count = count
+        await self.session.commit()
+        await self.session.refresh(document)
+        return document
+
+    async def update_index_status(self, tenant_id: str, document_id: str, status: str) -> Document:
+        document = await self.get(document_id, tenant_id)
+        document.index_status = status
         await self.session.commit()
         await self.session.refresh(document)
         return document

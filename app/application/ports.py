@@ -11,6 +11,7 @@ class RetrievedChunk:
     chunk_index: int
     content: str
     distance: float
+    content_hash: str
 
 
 @dataclass(frozen=True)
@@ -25,6 +26,7 @@ class TenantRecord(Protocol):
 
 class DocumentRecord(Protocol):
     id: str
+    index_status: str
 
 
 class Source(TypedDict):
@@ -32,6 +34,7 @@ class Source(TypedDict):
     chunk_index: int
     content: str
     distance: float
+    content_hash: str
 
 
 class TenantRepository(Protocol):
@@ -51,6 +54,9 @@ class DocumentRepository(Protocol):
     async def update_chunk_count(
         self, tenant_id: str, document_id: str, count: int
     ) -> DocumentRecord: ...
+    async def update_index_status(
+        self, tenant_id: str, document_id: str, status: str
+    ) -> DocumentRecord: ...
     async def soft_delete(self, document_id: str, tenant_id: str) -> None: ...
 
 
@@ -68,11 +74,11 @@ class LanguageModel(Protocol):
 
 
 class VectorStore(Protocol):
-    def add(
+    async def add(
         self, tenant_id: str, document_id: str, chunks: list[str], embeddings: list[list[float]]
     ) -> int: ...
-    def search(
+    async def search(
         self, tenant_id: str, embedding: list[float], limit: int
     ) -> list[RetrievedChunk]: ...
-    def delete_document(self, tenant_id: str, document_id: str) -> int: ...
-    def delete_tenant(self, tenant_id: str) -> int: ...
+    async def delete_document(self, tenant_id: str, document_id: str) -> int: ...
+    async def delete_tenant(self, tenant_id: str) -> int: ...

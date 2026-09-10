@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from contextvars import ContextVar
+from uuid import UUID
 
 from fastapi import HTTPException, Request, status
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
 from starlette.types import ASGIApp
 
 from app.core.config import settings
@@ -61,16 +62,25 @@ class TenantAuthMiddleware(BaseHTTPMiddleware):
 
         if not tenant_id:
             logger.warning(f"Missing {self.tenant_id_header} header")
-            raise HTTPException(
+            return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Missing {self.tenant_id_header} header",
+                content={"error": "Unauthorized", "detail": "Missing tenant credentials"},
+            )
+
+        try:
+            UUID(tenant_id)
+        except ValueError:
+            logger.warning("Invalid tenant identifier format")
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={"error": "Unauthorized", "detail": "Invalid tenant credentials"},
             )
 
         if not api_key:
             logger.warning(f"Missing {self.api_key_header} header")
-            raise HTTPException(
+            return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Missing {self.api_key_header} header",
+                content={"error": "Unauthorized", "detail": "Missing tenant credentials"},
             )
 
         set_tenant_context(tenant_id, api_key)

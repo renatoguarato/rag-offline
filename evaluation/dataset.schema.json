@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Offline RAG Evaluation Case",
+  "type": "object",
+  "required": [
+    "case_id",
+    "question",
+    "expected_answer",
+    "relevant_chunk_ids",
+    "required_facts",
+    "answerable"
+  ],
+  "properties": {
+    "case_id": {"type": "string", "minLength": 1},
+    "question": {"type": "string", "minLength": 1},
+    "expected_answer": {"type": "string"},
+    "relevant_chunk_ids": {"type": "array", "items": {"type": "string"}},
+    "required_facts": {"type": "array", "items": {"type": "string"}},
+    "answerable": {"type": "boolean"}
+  },
+  "additionalProperties": false
+}

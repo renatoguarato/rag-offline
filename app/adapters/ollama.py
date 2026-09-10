@@ -15,3 +15,26 @@ class OllamaAdapter:
 
     async def is_available(self) -> bool:
         return await self._service.check_connection()
+
+
+class OllamaEmbeddingAdapter:
+    """Embedding-only Ollama adapter."""
+
+    def __init__(self, service: OllamaService) -> None:
+        self._service = service
+
+    async def embed(self, texts: list[str]) -> list[list[float]]:
+        return await self._service.generate_embeddings(texts)
+
+    async def is_available(self) -> bool:
+        return await self._service.check_connection()
+
+
+class OllamaLanguageModelAdapter:
+    """Generation-only Ollama adapter."""
+
+    def __init__(self, service: OllamaService) -> None:
+        self._service = service
+
+    async def answer(self, question: str, context: str) -> str:
+        return await self._service.generate_response(question, context)

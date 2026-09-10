@@ -21,7 +21,7 @@ class DocumentProcessor:
             reader = PdfReader(BytesIO(file_content))
             text = ""
             for page in reader.pages:
-                text += page.extract_text() + "\n"
+                text += (page.extract_text() or "") + "\n"
             logger.info(f"Extracted text from PDF: {len(text)} characters")
             return text
         except Exception as e:

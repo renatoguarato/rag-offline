@@ -31,6 +31,7 @@ async def test_query_rag(tenant_client: AsyncClient) -> None:
     assert "sources" in data
     assert "context_chunks" in data
     assert data["context_chunks"] > 0
+    assert "content_hash" in data["sources"][0]
 
 
 @pytest.mark.asyncio
@@ -44,3 +45,5 @@ async def test_query_rag_no_documents(tenant_client: AsyncClient) -> None:
     data = response.json()
     assert "answer" in data
     assert "sources" in data
+    assert data["context_chunks"] == 0
+    assert "could not find enough information" in data["answer"]

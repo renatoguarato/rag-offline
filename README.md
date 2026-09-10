@@ -28,6 +28,7 @@ Production-ready offline RAG (Retrieval-Augmented Generation) application with s
 - Ollama running locally with llama3 model installed
   ```bash
   ollama pull llama3
+  ollama pull nomic-embed-text
   ollama serve
   ```
 
@@ -56,7 +57,9 @@ Available configuration options:
 - `DATABASE_URL`: SQLite database connection string
 - `OLLAMA_BASE_URL`: Ollama API endpoint (default: http://localhost:11434)
 - `OLLAMA_MODEL`: Ollama model to use (default: llama3)
+- `OLLAMA_EMBEDDING_MODEL`: Ollama embedding model (default: nomic-embed-text)
 - `CHROMA_PERSIST_DIRECTORY`: ChromaDB storage location
+- `RAG_MAX_DISTANCE`: optional maximum Chroma distance; unset disables filtering
 - `MAX_DOCUMENT_SIZE`: Maximum document upload size in bytes
 
 ## Running the Application
@@ -64,6 +67,12 @@ Available configuration options:
 ```bash
 # Development server
 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+For a database with existing data, apply schema migrations before starting:
+
+```bash
+uv run alembic upgrade head
 ```
 
 The API will be available at `http://localhost:8000`

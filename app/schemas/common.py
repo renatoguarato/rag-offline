@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class TenantCreate(BaseModel):
@@ -12,12 +12,14 @@ class TenantCreate(BaseModel):
 class TenantResponse(BaseModel):
     id: str
     name: str
-    api_key: str
     created_at: datetime
     updated_at: datetime | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TenantCreatedResponse(TenantResponse):
+    api_key: str
 
 
 class DocumentCreate(BaseModel):
@@ -31,16 +33,24 @@ class DocumentResponse(BaseModel):
     content_type: str
     file_size: int
     chunk_count: int
+    index_status: str
     created_at: datetime
     updated_at: datetime | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QueryRequest(BaseModel):
     question: str = Field(..., min_length=1)
     n_results: int = Field(default=5, ge=1, le=20)
+
+    @field_validator("question")
+    @classmethod
+    def question_must_not_be_blank(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Question must not be blank")
+        return normalized
 
 
 class QueryResponse(BaseModel):

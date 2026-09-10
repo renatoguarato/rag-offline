@@ -27,6 +27,7 @@ class Document(Base):
     content_type: Mapped[str] = mapped_column(String(100), nullable=False)
     file_size: Mapped[int] = mapped_column(nullable=False)
     chunk_count: Mapped[int] = mapped_column(nullable=False, default=0)
+    index_status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

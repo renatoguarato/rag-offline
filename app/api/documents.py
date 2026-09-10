@@ -10,6 +10,11 @@ from app.core.exceptions import ValidationException
 from app.schemas.common import DocumentResponse
 
 router = APIRouter(prefix="/documents", tags=["documents"])
+SUPPORTED_CONTENT_TYPES = {
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/plain",
+}
 
 
 @router.post("", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
@@ -19,6 +24,9 @@ async def upload_document(
     service: DocumentUseCases = Depends(get_document_use_cases),
 ) -> DocumentResponse:
     content_type = file.content_type or "application/octet-stream"
+
+    if content_type not in SUPPORTED_CONTENT_TYPES:
+        raise ValidationException("Unsupported document type")
 
     file_content = await file.read()
 

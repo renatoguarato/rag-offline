@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any, cast
 
 from app.application.ports import RetrievedChunk
@@ -10,15 +11,19 @@ class ChromaAdapter:
     def __init__(self) -> None:
         self._service = ChromaService()
 
-    def add(
+    async def add(
         self, tenant_id: str, document_id: str, chunks: list[str], embeddings: list[list[float]]
     ) -> int:
-        return self._service.add_chunks(tenant_id, document_id, chunks, embeddings)
+        return await asyncio.to_thread(
+            self._service.add_chunks, tenant_id, document_id, chunks, embeddings
+        )
 
-    def search(self, tenant_id: str, embedding: list[float], limit: int) -> list[RetrievedChunk]:
+    async def search(
+        self, tenant_id: str, embedding: list[float], limit: int
+    ) -> list[RetrievedChunk]:
         raw_chunks: list[dict[str, object]] = cast(
             list[dict[str, object]],
-            cast(Any, self._service).query(tenant_id, embedding, limit),
+            await asyncio.to_thread(cast(Any, self._service).query, tenant_id, embedding, limit),
         )
         return [
             RetrievedChunk(
@@ -26,12 +31,13 @@ class ChromaAdapter:
                 chunk_index=cast(int, chunk["chunk_index"]),
                 content=cast(str, chunk["content"]),
                 distance=cast(float, chunk["distance"]),
+                content_hash=cast(str, chunk["content_hash"]),
             )
             for chunk in raw_chunks
         ]
 
-    def delete_document(self, tenant_id: str, document_id: str) -> int:
-        return self._service.delete_document(tenant_id, document_id)
+    async def delete_document(self, tenant_id: str, document_id: str) -> int:
+        return await asyncio.to_thread(self._service.delete_document, tenant_id, document_id)
 
-    def delete_tenant(self, tenant_id: str) -> int:
-        return self._service.delete_tenant_data(tenant_id)
+    async def delete_tenant(self, tenant_id: str) -> int:
+        return await asyncio.to_thread(self._service.delete_tenant_data, tenant_id)

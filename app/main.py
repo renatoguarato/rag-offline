@@ -4,13 +4,16 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.documents import router as documents_router
 from app.api.health import router as health_router
 from app.api.rag import router as rag_router
 from app.api.tenants import router as tenants_router
+from app.core.config import settings
 from app.core.database import init_db
+from app.core.error_handlers import generic_exception_handler, validation_exception_handler
 from app.core.logging import setup_logging
 from app.middleware.tenant_auth import TenantAuthMiddleware
 
@@ -31,9 +34,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(Exception, generic_exception_handler)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        origin.strip() for origin in settings.CORS_ALLOWED_ORIGINS.split(",") if origin.strip()
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

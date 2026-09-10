@@ -47,10 +47,17 @@ class ChromaService:
 
         ids = []
         for i, chunk in enumerate(chunks):
-            chunk_hash = hashlib.md5(chunk.encode()).hexdigest()
+            chunk_hash = hashlib.sha256(chunk.encode()).hexdigest()
             ids.append(f"{document_id}_{i}_{chunk_hash}")
 
-        metadatas = [{"document_id": document_id, "chunk_index": i} for i in range(len(chunks))]
+        metadatas = [
+            {
+                "document_id": document_id,
+                "chunk_index": i,
+                "content_hash": hashlib.sha256(chunk.encode()).hexdigest(),
+            }
+            for i, chunk in enumerate(chunks)
+        ]
 
         try:
             collection.add(
@@ -86,7 +93,8 @@ class ChromaService:
             result = collection.get()
             deleted_count = len(result["ids"])
 
-            collection.delete(where={})
+            if result["ids"]:
+                collection.delete(ids=result["ids"])
             logger.info(f"Deleted {deleted_count} chunks for tenant {tenant_id}")
             return deleted_count
         except Exception as e:
@@ -115,6 +123,10 @@ class ChromaService:
                         "chunk_index": results["metadatas"][0][i]["chunk_index"],
                         "content": results["documents"][0][i],
                         "distance": results["distances"][0][i],
+                        "content_hash": results["metadatas"][0][i].get(
+                            "content_hash",
+                            hashlib.sha256(results["documents"][0][i].encode()).hexdigest(),
+                        ),
                     }
                 )
 

@@ -5,18 +5,18 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.dependencies import authenticated_tenant, get_tenant_use_cases
 from app.application.ports import TenantRecord
 from app.application.use_cases import TenantUseCases
-from app.schemas.common import TenantCreate, TenantResponse
+from app.schemas.common import TenantCreate, TenantCreatedResponse, TenantResponse
 
 router = APIRouter(prefix="/tenants", tags=["tenants"])
 
 
-@router.post("", response_model=TenantResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=TenantCreatedResponse, status_code=status.HTTP_201_CREATED)
 async def create_tenant(
     tenant_data: TenantCreate,
     service: TenantUseCases = Depends(get_tenant_use_cases),
-) -> TenantResponse:
+) -> TenantCreatedResponse:
     tenant = await service.create(tenant_data.name)
-    return TenantResponse.model_validate(tenant)
+    return TenantCreatedResponse.model_validate(tenant)
 
 
 @router.get("", response_model=list[TenantResponse])
