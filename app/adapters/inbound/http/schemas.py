@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
+
+from app.domain.entities import Document, Tenant
 
 
 class TenantCreate(BaseModel):
@@ -15,15 +17,28 @@ class TenantResponse(BaseModel):
     created_at: datetime
     updated_at: datetime | None = None
 
-    model_config = ConfigDict(from_attributes=True)
+    @classmethod
+    def from_domain(cls, tenant: Tenant) -> TenantResponse:
+        return cls(
+            id=tenant.id,
+            name=tenant.name,
+            created_at=tenant.created_at,
+            updated_at=tenant.updated_at,
+        )
 
 
 class TenantCreatedResponse(TenantResponse):
     api_key: str
 
-
-class DocumentCreate(BaseModel):
-    pass
+    @classmethod
+    def from_domain(cls, tenant: Tenant) -> TenantCreatedResponse:
+        return cls(
+            id=tenant.id,
+            name=tenant.name,
+            api_key=tenant.api_key,
+            created_at=tenant.created_at,
+            updated_at=tenant.updated_at,
+        )
 
 
 class DocumentResponse(BaseModel):
@@ -37,7 +52,9 @@ class DocumentResponse(BaseModel):
     created_at: datetime
     updated_at: datetime | None = None
 
-    model_config = ConfigDict(from_attributes=True)
+    @classmethod
+    def from_domain(cls, document: Document) -> DocumentResponse:
+        return cls.model_validate(document.__dict__)
 
 
 class QueryRequest(BaseModel):
@@ -63,8 +80,3 @@ class HealthResponse(BaseModel):
     status: str
     ollama_connected: bool
     timestamp: datetime
-
-
-class ErrorResponse(BaseModel):
-    error: str
-    detail: str | None = None

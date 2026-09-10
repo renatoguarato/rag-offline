@@ -172,30 +172,25 @@ uv run ruff format .
 
 ## Architecture
 
-The application follows a hexagonal architecture (ports and adapters):
+The application follows a strict hexagonal architecture (ports and adapters):
 
-- `app/domain/`: business concepts with no framework dependency.
-- `app/application/`: use cases and protocols (ports). This is the stable business boundary.
-- `app/adapters/`: implementations for SQLAlchemy, ChromaDB, Ollama, and file processing.
-- `app/api/`: FastAPI delivery adapter and dependency composition root.
-- `app/core/`, `app/models/`: framework configuration and persistence mappings.
+- `app/domain/`: entities and business rules with no framework or infrastructure dependency.
+- `app/application/`: typed use cases and secondary ports; it depends only on the domain.
+- `app/adapters/inbound/http/`: FastAPI routes, schemas, authentication and presenters.
+- `app/adapters/outbound/`: integrations with SQLAlchemy, ChromaDB, Ollama and files.
+- `app/bootstrap/`: composition root, configuration, lifecycle and concrete dependency wiring.
 
-Use cases receive protocols through their constructors, which keeps business rules testable with in-memory fakes and applies dependency inversion, single responsibility, and interface segregation.
+Use cases receive ports through constructors. ORM models never cross the persistence adapter, and architectural tests reject imports that violate the dependency direction.
 
 ## Project Structure
 
 ```
 rag-offline/
 ├── app/
-│   ├── api/           # HTTP adapter and composition root
+│   ├── adapters/      # Inbound HTTP and outbound integrations
 │   ├── application/   # Use cases and ports
-│   ├── domain/        # Framework-independent business concepts
-│   ├── adapters/      # SQLAlchemy, ChromaDB, Ollama adapters
-│   ├── core/          # Configuration, exceptions, logging, database
-│   ├── middleware/    # Auth middleware
-│   ├── models/        # SQLAlchemy models
-│   ├── schemas/       # Pydantic models
-│   └── services/      # Business logic
+│   ├── bootstrap/     # Composition root and runtime configuration
+│   └── domain/        # Framework-independent business concepts
 ├── alembic/           # Database migrations
 ├── tests/             # Test suite
 └── chroma_db/         # Vector storage

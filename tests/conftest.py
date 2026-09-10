@@ -3,22 +3,19 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator
 
 import pytest
-from fastapi import Depends
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.adapters.persistence.repositories import (
-    SqlAlchemyDocumentRepository,
-    SqlAlchemyTenantRepository,
+from app.adapters.persistence.database import Base
+from app.adapters.persistence.unit_of_work import SqlAlchemyUnitOfWork
+from app.application.use_cases import (
+    AuthenticateTenant,
+    DocumentUseCases,
+    HealthCheck,
+    QueryRAG,
+    TenantUseCases,
 )
-from app.api.dependencies import (
-    get_document_use_cases,
-    get_ollama_provider,
-    get_query_use_case,
-    get_tenant_use_cases,
-)
-from app.application.use_cases import DocumentUseCases, QueryRAG, TenantUseCases
-from app.core.database import Base, get_db
+from app.bootstrap.runtime import SecureApiKeyGenerator, SystemClock, UuidGenerator
 from app.main import app
 from tests.fakes import (
     FakeDocumentProcessor,
@@ -49,6 +46,40 @@ async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
+class TestRuntime:
+    def __init__(self) -> None:
+        self._vectors = FakeVectorStore()
+        self._embeddings = FakeEmbeddingProvider()
+
+        def factory():
+            return SqlAlchemyUnitOfWork(AsyncSessionLocal)
+
+        self.tenant_use_cases = TenantUseCases(
+            factory, self._vectors, SystemClock(), UuidGenerator(), SecureApiKeyGenerator()
+        )
+        self.authenticator = AuthenticateTenant(factory)
+        self.document_use_cases = DocumentUseCases(
+            factory,
+            FakeDocumentProcessor(),
+            self._embeddings,
+            self._vectors,
+            SystemClock(),
+            UuidGenerator(),
+        )
+        self.query_rag = QueryRAG(
+            self._embeddings, FakeLanguageModel(), self._vectors, _NoopTelemetry()
+        )
+        self.health_check = HealthCheck(self._embeddings)
+
+    async def close(self) -> None:
+        return None
+
+
+class _NoopTelemetry:
+    def event(self, name: str, **attributes: object) -> None:
+        return None
+
+
 @pytest.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with engine.begin() as conn:
@@ -63,34 +94,10 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 
 @pytest.fixture
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    app.dependency_overrides[get_db] = override_get_db
-    embeddings = FakeEmbeddingProvider()
-    model = FakeLanguageModel()
-    vectors = FakeVectorStore()
-
-    def override_documents(db: AsyncSession = Depends(get_db)) -> DocumentUseCases:
-        return DocumentUseCases(
-            SqlAlchemyDocumentRepository(db),
-            FakeDocumentProcessor(),
-            embeddings,
-            vectors,
-        )
-
-    def override_query() -> QueryRAG:
-        return QueryRAG(embeddings, model, vectors)
-
-    def override_tenants(db: AsyncSession = Depends(get_db)) -> TenantUseCases:
-        return TenantUseCases(SqlAlchemyTenantRepository(db), vectors)
-
-    app.dependency_overrides[get_document_use_cases] = override_documents
-    app.dependency_overrides[get_query_use_case] = override_query
-    app.dependency_overrides[get_tenant_use_cases] = override_tenants
-    app.dependency_overrides[get_ollama_provider] = lambda: embeddings
+    app.state.runtime = TestRuntime()
 
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
-
-    app.dependency_overrides.clear()
 
 
 @pytest.fixture

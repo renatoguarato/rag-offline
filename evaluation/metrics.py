@@ -137,7 +137,7 @@ def evaluate_dataset(
 ) -> tuple[list[CaseMetrics], dict[str, float]]:
     """Evaluate all cases and return per-case and aggregate metrics."""
 
-    results = []
+    results: list[CaseMetrics] = []
     for case in cases:
         try:
             observation = observations[case.case_id]

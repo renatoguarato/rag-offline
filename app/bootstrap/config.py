@@ -4,11 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        case_sensitive=False,
-        extra="ignore",
-    )
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, extra="ignore")
 
     DATABASE_URL: str = "sqlite+aiosqlite:///./rag_offline.db"
     OLLAMA_BASE_URL: str = "http://localhost:11434"

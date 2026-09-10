@@ -1,116 +1,133 @@
 from __future__ import annotations
 
-import secrets
-import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import DocumentNotFoundException, TenantNotFoundException
-from app.models.document import Document
-from app.models.tenant import Tenant
+from app.adapters.persistence.models import DocumentModel, TenantModel
+from app.application.use_cases import DocumentNotFound, TenantNotFound
+from app.domain.entities import Document, Tenant
+
+
+def _tenant(model: TenantModel) -> Tenant:
+    return Tenant(
+        model.id, model.name, model.api_key, model.created_at, model.updated_at, model.deleted_at
+    )
+
+
+def _document(model: DocumentModel) -> Document:
+    return Document(
+        model.id,
+        model.tenant_id,
+        model.filename,
+        model.content_type,
+        model.file_size,
+        model.chunk_count,
+        model.index_status,
+        model.created_at,
+        model.updated_at,
+        model.deleted_at,
+    )
 
 
 class SqlAlchemyTenantRepository:
     def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+        self._session = session
 
-    async def create(self, name: str) -> Tenant:
-        tenant = Tenant(id=str(uuid.uuid4()), api_key=secrets.token_hex(32), name=name)
-        self.session.add(tenant)
-        await self.session.commit()
-        await self.session.refresh(tenant)
+    async def add(self, tenant: Tenant) -> Tenant:
+        self._session.add(
+            TenantModel(
+                id=tenant.id,
+                name=tenant.name,
+                api_key=tenant.api_key,
+                created_at=tenant.created_at,
+                updated_at=tenant.updated_at,
+                deleted_at=tenant.deleted_at,
+            )
+        )
         return tenant
 
     async def get(self, tenant_id: str) -> Tenant:
-        result = await self.session.execute(
-            select(Tenant).where(Tenant.id == tenant_id, Tenant.deleted_at.is_(None))
+        result = await self._session.execute(
+            select(TenantModel).where(TenantModel.id == tenant_id, TenantModel.deleted_at.is_(None))
         )
-        tenant = result.scalar_one_or_none()
-        if tenant is None:
-            raise TenantNotFoundException("Tenant not found")
-        return tenant
-
-    async def get_by_api_key(self, api_key: str) -> Tenant:
-        result = await self.session.execute(
-            select(Tenant).where(Tenant.api_key == api_key, Tenant.deleted_at.is_(None))
-        )
-        tenant = result.scalar_one_or_none()
-        if tenant is None:
-            raise TenantNotFoundException("Invalid API key")
-        return tenant
+        model = result.scalar_one_or_none()
+        if model is None:
+            raise TenantNotFound("Tenant not found")
+        return _tenant(model)
 
     async def list(self, skip: int, limit: int) -> list[Tenant]:
-        result = await self.session.execute(
-            select(Tenant).where(Tenant.deleted_at.is_(None)).offset(skip).limit(limit)
+        result = await self._session.execute(
+            select(TenantModel).where(TenantModel.deleted_at.is_(None)).offset(skip).limit(limit)
         )
-        return list(result.scalars().all())
+        return [_tenant(model) for model in result.scalars().all()]
 
     async def soft_delete(self, tenant_id: str) -> None:
-        tenant = await self.get(tenant_id)
-        tenant.deleted_at = datetime.now(UTC)
-        await self.session.commit()
+        result = await self._session.execute(select(TenantModel).where(TenantModel.id == tenant_id))
+        model = result.scalar_one_or_none()
+        if model is None:
+            raise TenantNotFound("Tenant not found")
+        model.deleted_at = datetime.now(UTC)
 
 
 class SqlAlchemyDocumentRepository:
     def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+        self._session = session
 
-    async def create(
-        self, tenant_id: str, filename: str, content_type: str, file_size: int
-    ) -> Document:
-        document = Document(
-            id=str(uuid.uuid4()),
-            tenant_id=tenant_id,
-            filename=filename,
-            content_type=content_type,
-            file_size=file_size,
-            chunk_count=0,
-            index_status="pending",
+    async def add(self, document: Document) -> Document:
+        self._session.add(
+            DocumentModel(
+                id=document.id,
+                tenant_id=document.tenant_id,
+                filename=document.filename,
+                content_type=document.content_type,
+                file_size=document.file_size,
+                chunk_count=document.chunk_count,
+                index_status=document.index_status,
+                created_at=document.created_at,
+                updated_at=document.updated_at,
+                deleted_at=document.deleted_at,
+            )
         )
-        self.session.add(document)
-        await self.session.commit()
-        await self.session.refresh(document)
         return document
 
     async def get(self, document_id: str, tenant_id: str) -> Document:
-        result = await self.session.execute(
-            select(Document).where(
-                Document.id == document_id,
-                Document.tenant_id == tenant_id,
-                Document.deleted_at.is_(None),
+        result = await self._session.execute(
+            select(DocumentModel).where(
+                DocumentModel.id == document_id,
+                DocumentModel.tenant_id == tenant_id,
+                DocumentModel.deleted_at.is_(None),
             )
         )
-        document = result.scalar_one_or_none()
-        if document is None:
-            raise DocumentNotFoundException("Document not found")
-        return document
+        model = result.scalar_one_or_none()
+        if model is None:
+            raise DocumentNotFound("Document not found")
+        return _document(model)
 
     async def list(self, tenant_id: str, skip: int, limit: int) -> list[Document]:
-        result = await self.session.execute(
-            select(Document)
-            .where(Document.tenant_id == tenant_id, Document.deleted_at.is_(None))
+        result = await self._session.execute(
+            select(DocumentModel)
+            .where(DocumentModel.tenant_id == tenant_id, DocumentModel.deleted_at.is_(None))
             .offset(skip)
             .limit(limit)
         )
-        return list(result.scalars().all())
+        return [_document(model) for model in result.scalars().all()]
 
-    async def update_chunk_count(self, tenant_id: str, document_id: str, count: int) -> Document:
-        document = await self.get(document_id, tenant_id)
-        document.chunk_count = count
-        await self.session.commit()
-        await self.session.refresh(document)
-        return document
-
-    async def update_index_status(self, tenant_id: str, document_id: str, status: str) -> Document:
-        document = await self.get(document_id, tenant_id)
-        document.index_status = status
-        await self.session.commit()
-        await self.session.refresh(document)
+    async def save(self, document: Document) -> Document:
+        result = await self._session.execute(
+            select(DocumentModel).where(DocumentModel.id == document.id)
+        )
+        model = result.scalar_one_or_none()
+        if model is None:
+            raise DocumentNotFound("Document not found")
+        model.chunk_count = document.chunk_count
+        model.index_status = document.index_status
+        model.updated_at = document.updated_at
+        model.deleted_at = document.deleted_at
         return document
 
     async def soft_delete(self, document_id: str, tenant_id: str) -> None:
         document = await self.get(document_id, tenant_id)
-        document.deleted_at = datetime.now(UTC)
-        await self.session.commit()
+        document.soft_delete(datetime.now(UTC))
+        await self.save(document)
